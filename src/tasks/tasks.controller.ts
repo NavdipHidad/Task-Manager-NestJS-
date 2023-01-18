@@ -1,21 +1,91 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { Task } from './task.module';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { GetUser } from 'src/auth/get-user.decorator';
+import { User } from 'src/auth/user.entity';
+import { CreateTaskDto } from './dto/create-task.dto';
+import { GetTasksFilterDto } from './dto/get-tasks-filter.dto';
+import { UpdateTaskStatusDto } from './dto/update-task-status.dto';
+import { TaskStatus } from './task-status-enum';
+import { Task } from './task.entity';
 import { TasksService } from './tasks.service';
 
 @Controller('tasks')
+@UseGuards(AuthGuard())
 export class TasksController {
-    constructor(private taskService: TasksService){}
+    constructor(private taskService: TasksService) { }
 
-    @Get()
-    getAllTasks(): Task[]{
-        return this.taskService.getAllTask();
+    @Get('/:id')
+    getTaskById(
+        @Param('id') id: string,
+        @GetUser() user: User): Promise<Task> {
+        return this.taskService.getTaskById(id, user);
     }
 
     @Post()
-    //createTask(@Body() body): Task{
-    /*con do also for take only required params*/
-    createTask(@Body('title') title: string, @Body('description') description: string): Task{
-        //console.log('body is', title, description);
-        return this.taskService.createTask(title, description);
+    createTask(
+        @Body() createTaskDto: CreateTaskDto,
+        @GetUser() user: User): Promise<Task> {
+        return this.taskService.createTask(createTaskDto, user);
     }
+
+    @Delete('/:id')
+    deleteTask(
+        @Param('id') id: string,
+        @GetUser() user: User
+    ): Promise<void> {
+        return this.taskService.deleteTask(id, user);
+    }
+
+    @Patch('/:id/status')
+    updateTaskStatus(
+        @Param('id') id: string,
+        @Body() updateTaskStatusDto: UpdateTaskStatusDto,
+        @GetUser() user: User
+    ): Promise<Task> {
+        const { status } = updateTaskStatusDto;
+        return this.taskService.updateTaskStatus(id, status, user);
+    }
+
+    @Get()
+    getTasks(@GetUser() user: User): Promise<Task[]> {
+        return this.taskService.getTasks(user);
+    }
+
+    // @Get()
+    // getAllTasks(): Task[]{
+    //     return this.taskService.getAllTask();
+    // }
+
+    // @Get('/:id')
+    // getTaskById(@Param('id') id:string): Task{
+    //     return this.taskService.getTaskById(id);
+    // }
+
+    // @Post()
+    // // createTask(@Body() body): Task{
+    // /* can do also for take only required params */
+    // // createTask(@Body('title') title: string, @Body('description') description: string): Task{
+    // /* can do with the DTO */
+    // createTask(@Body()createTaskDto: CreateTaskDto){
+    //     //console.log('body is', title, description);
+    //     return this.taskService.createTask(createTaskDto);
+    // }
+
+    // @Delete('/:id')
+    // deleteTask(@Param('id') id: string): void{
+    //     return this.taskService.deleteTask(id);
+    // }
+
+    // @Patch('/:id/status')
+    // updateTaskStatus(
+    //     @Param('id') id: string,
+    //     @Body('status') updateTaskStatusDto: UpdateTaskStatusDto,
+    //     ): Task{
+    //         const {status} = updateTaskStatusDto;
+    //         return this.taskService.updateTaskStatus(id, status);
+    // }
 }
+function UseGaurds() {
+    throw new Error('Function not implemented.');
+}
+
